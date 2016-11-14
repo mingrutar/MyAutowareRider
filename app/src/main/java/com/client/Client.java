@@ -16,46 +16,44 @@ public abstract class Client {
     private static final int TIMEOUT = 5 * 1000;       // 5 sec
 
     private Socket mSocket;
-    private String mAddress;
-    private int mPort;
+//    private String mAddress;
+//    private int mPort;
 
     public boolean isClosed() {
         return (mSocket == null) || ((mSocket!=null) && mSocket.isClosed());
     }
-    public void connect(String address, int port) {
-        mAddress = address;
-        mPort = port;
-        if ((mSocket != null) && !mSocket.isClosed() ) {
-            this.close();
-            mSocket = null;
-        }
-    }
-
-    private synchronized boolean connect() {
-        try {
-            mSocket = new Socket(mAddress, mPort);
-            mSocket.setSoTimeout(TIMEOUT);
-            Log.v(LOG_TAG, "++++ connected to "+mAddress+":"+mPort);
-            return true;
-        } catch (IOException ex) {
-            Log.e(LOG_TAG, "connect to "+mAddress+":"+mPort+" caught exception:"+ex);
-            return false;
-        }
+    public void connect(final String address, final int port) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mSocket = new Socket(address, port);
+                    mSocket.setSoTimeout(TIMEOUT);
+                    Log.v(LOG_TAG, "++++ connected to "+address+":"+port);
+                } catch (IOException ex) {
+                    Log.e(LOG_TAG, "connect to "+address+":"+port+" caught exception:"+ex);
+                }
+            }
+        });
     }
 
     public synchronized void close() {
         if (mSocket != null ) {
-            try {
-                mSocket.close();
-            } catch (IOException ex) {
-                Log.e(LOG_TAG, "close caught exception:"+ex);
-            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        mSocket.close();
+                        mSocket = null;
+                    } catch (IOException ex) {
+                        Log.e(LOG_TAG, "close caught exception:" + ex);
+                    }
+                }
+            });
         }
     }
 
-    public void sendInt(int arg0) {
-        if (mSocket == null)
-            connect();
+    protected void sendInt(int arg0) {
         if ((mSocket != null) && mSocket.isConnected()) {
             try {
                 OutputStream os = mSocket.getOutputStream();
@@ -70,9 +68,7 @@ public abstract class Client {
         }
     }
 
-    public void sendIntTuple(int arg0, int arg1) {
-        if (mSocket == null)
-            connect();
+    protected void sendIntTuple(int arg0, int arg1) {
         if ((mSocket != null) && mSocket.isConnected()) {
             try {
                 OutputStream os = mSocket.getOutputStream();
@@ -87,9 +83,7 @@ public abstract class Client {
         }
     }
 
-    public void sendDoubleArray(double arg0[]) {
-        if (mSocket == null)
-            connect();
+    protected void sendDoubleArray(double arg0[]) {
         if ((mSocket != null) && mSocket.isConnected()) {
             try {
                 DataOutputStream dos = new DataOutputStream(mSocket.getOutputStream());
@@ -106,9 +100,7 @@ public abstract class Client {
         }
     }
 
-    public int recvInt() {
-        if (mSocket == null)
-            connect();
+    protected int recvInt() {
         int ret = -1;
         if ((mSocket != null) && mSocket.isConnected()) {
             try {
@@ -124,9 +116,7 @@ public abstract class Client {
         return ret;
     }
 
-    public int recvNDT() {
-        if (mSocket == null)
-            connect();
+    protected int recvNDT() {
         int ret = -1;
         if ((mSocket != null) && mSocket.isConnected()) {
             try {

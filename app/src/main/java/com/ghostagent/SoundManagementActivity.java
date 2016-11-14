@@ -193,7 +193,6 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		drawLeftView.setColor(COLOR_RED);
 		drawRightView.setColor(COLOR_RED);
 		drawCenterView.setColor(COLOR_RED);
-
 		if (commandClient.send(CommandClient.GEAR, gearButton.getMode()) < 0)
 			return false;
 		if (commandClient.send(CommandClient.MODE, driveButton.getMode()) < 0)
@@ -202,10 +201,27 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 			return false;
 		if (commandClient.send(CommandClient.S2, s2Button.getMode()) < 0)
 			return false;
-
 		return true;
 	}
-
+	void initiateConnections(final String address, final int commandPort, final int informationPort) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				commandClient.connect(address, commandPort);
+				informationClient.connect(address, informationPort);
+				if (!startServerConnecting())
+					stopServerConnecting();
+			}
+		});
+	}
+	void sendExitCommand() {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				sendExitCommand();
+			}
+		});
+	}
 	private void stopServerConnecting() {
 		drawLeftView.setColor(COLOR_DARK_RED);
 		drawRightView.setColor(COLOR_DARK_RED);
@@ -299,12 +315,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					commandPort = Integer.parseInt(settings[1]);
 					informationPort = Integer.parseInt(settings[2]);
 
-					commandClient.connect(address, commandPort);
-					informationClient.connect(address, informationPort);
-					if (!startServerConnecting())
-						stopServerConnecting();
-//					} else
-//						stopServerConnecting();
+					initiateConnections(address, commandPort, informationPort);
 				}
 				if (validatePortNumber(settings[5]) &&
 				    validatePortNumber(settings[7]) &&
@@ -611,19 +622,14 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 						}
 
 						if (bIsServerConnecting) {
-							commandClient.send(
-								CommandClient.EXIT,
-								CommandClient.EXIT_UPDATE_CONFIGURATION);
-							stopServerConnecting();
+							sendExitCommand();
 						}
 
 						address = addressString;
 						commandPort = Integer.parseInt(commandPortString);
 						informationPort = Integer.parseInt(informationPortString);
 
-						commandClient.connect(address, commandPort);
-						informationClient.connect(address, informationPort);
-						stopServerConnecting();
+						initiateConnections(address, commandPort, informationPort);
 
 						canDataSender = new CanDataSender( SoundManagementActivity.this,
 							gatheringTableString,
@@ -742,10 +748,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 							if (missBeacon < InformationClient.MISS_BEACON_LIMIT)
 								missBeacon++;
 							else {
-								commandClient.send(
-									CommandClient.EXIT,
-									CommandClient.EXIT_EXCEED_ERROR_LIMIT);
-								stopServerConnecting();
+								sendExitCommand();
 								missBeacon = 0;
 							}
 						}
@@ -753,10 +756,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					}
 
 					if (data[1] < 0) {
-						commandClient.send(
-							CommandClient.EXIT,
-							CommandClient.EXIT_RECEIVE_BROKEN_PACKET);
-						stopServerConnecting();
+						sendExitCommand();
 						missBeacon = 0;
 						continue;
 					}
@@ -942,20 +942,24 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		bExistsHeight = false;
 
 		if (bIsServerConnecting) {
-			commandClient.send(
-				CommandClient.EXIT,
-				CommandClient.EXIT_DESTROY_ACTIVITY);
-			stopServerConnecting();
+			sendExitCommand();
 		}
 	}
 
-	private int sendWayPoints(ArrayList<Double> wayPoints) {
-		double[] way = new double[wayPoints.size()];
+	private void sendWayPoints(final ArrayList<Double> wayPoints) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				double[] way = new double[wayPoints.size()];
 
-		for (int i = 0; i < wayPoints.size(); i++)
-			way[i] = wayPoints.get(i).doubleValue();
+				for (int i = 0; i < wayPoints.size(); i++)
+					way[i] = wayPoints.get(i).doubleValue();
 
-		return commandClient.sendRoute(way);
+				if (commandClient.sendRoute(way) < 0) {
+					stopServerConnecting();
+				}
+			}
+		}) ;
 	}
 
 	@Override
@@ -978,8 +982,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					}
 				}
 				breader.close();
-				if (sendWayPoints(wayPoints) < 0)
-					stopServerConnecting();
+				sendWayPoints(wayPoints);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -999,23 +1002,33 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		}
 		super.onWindowFocusChanged(hasFocus);
 	}
-
+	int sendCommand(final int cmdType, final int cmd) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				int data = commandClient.send(cmdType, cmd);
+				if (data < 0)
+					stopServerConnecting();
+			}
+		});
+		return 0;
+	}
 	@Override
 	public void onClick(View v) {
 		int data = -1;
 
 		if (v == gearButton.drive) {
-			data = commandClient.send(CommandClient.GEAR, GearButton.DRIVE);
+			data = sendCommand(CommandClient.GEAR, GearButton.DRIVE);
 		} else if (v == gearButton.reverse) {
-			data = commandClient.send(CommandClient.GEAR, GearButton.REVERSE);
+			data = sendCommand(CommandClient.GEAR, GearButton.REVERSE);
 		} else if (v == gearButton.brake) {
-			data = commandClient.send(CommandClient.GEAR, GearButton.BRAKE);
+			data = sendCommand(CommandClient.GEAR, GearButton.BRAKE);
 		} else if (v == gearButton.neutral) {
-			data = commandClient.send(CommandClient.GEAR, GearButton.NEUTRAL);
+			data = sendCommand(CommandClient.GEAR, GearButton.NEUTRAL);
 		} else if (v == driveButton.auto) {
-			data = commandClient.send(CommandClient.MODE, DriveButton.AUTO);
+			data = sendCommand(CommandClient.MODE, DriveButton.AUTO);
 		} else if (v == driveButton.normal) {
-			data = commandClient.send(CommandClient.MODE, DriveButton.NORMAL);
+			data = sendCommand(CommandClient.MODE, DriveButton.NORMAL);
 		} else if (v == driveButton.pursuit) {
 			Toast.makeText(this, "Pursuit not supported yet", Toast.LENGTH_LONG).show();
 			finish();
@@ -1042,15 +1055,14 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				s1Button.updateMode(S1Button.OK);
 			else
 				s1Button.updateMode(S1Button.NG);
-			data = commandClient.send(CommandClient.S1, s1Button.getMode());
+			data = sendCommand(CommandClient.S1, s1Button.getMode());
 		} else if (v == s2Button.s2) {
 			if (s2Button.getMode() == S2Button.OK)
 				s2Button.updateMode(S2Button.OK);
 			else
 				s2Button.updateMode(S2Button.NG);
-			data = commandClient.send(CommandClient.S2, s2Button.getMode());
+			data = sendCommand(CommandClient.S2, s2Button.getMode());
 		}
-
 		if (data < 0)
 			stopServerConnecting();
 	}
