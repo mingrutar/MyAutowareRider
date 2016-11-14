@@ -275,10 +275,20 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 
 			stream.close();
 		} catch (FileNotFoundException e) {
+			text = address + "\n" +
+					commandPort + "\n" +
+					informationPort + "\n" +
+					"" + "\n" +   		//?gatheringTableString for upload to table@db3.ertl.jp
+					"localhost" + "\n" +	//? update db3.ertl.jp table via ssh Tunnel Host?
+					22 + "\n" +
+					"ming" + "\n" +
+					"5558" + "\n" +
+					address		 + "\n" +                    //? forwardingRemoteHostString
+					"5555"		 + "\n" +                    //? forwardingRemotePortString
+					"end\n";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		if (text != null) {
 			String[] settings = text.split("\n");
 			if (settings.length == 11) {
@@ -289,12 +299,12 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					commandPort = Integer.parseInt(settings[1]);
 					informationPort = Integer.parseInt(settings[2]);
 
-					if (commandClient.connect(address, commandPort) &&
-					    informationClient.connect(address, informationPort)) {
-						if (!startServerConnecting())
-							stopServerConnecting();
-					} else
+					commandClient.connect(address, commandPort);
+					informationClient.connect(address, informationPort);
+					if (!startServerConnecting())
 						stopServerConnecting();
+//					} else
+//						stopServerConnecting();
 				}
 				if (validatePortNumber(settings[5]) &&
 				    validatePortNumber(settings[7]) &&
@@ -611,12 +621,9 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 						commandPort = Integer.parseInt(commandPortString);
 						informationPort = Integer.parseInt(informationPortString);
 
-						if (commandClient.connect(address, commandPort) &&
-						    informationClient.connect(address, informationPort)) {
-							if (!startServerConnecting())
-								stopServerConnecting();
-						} else
-							stopServerConnecting();
+						commandClient.connect(address, commandPort);
+						informationClient.connect(address, informationPort);
+						stopServerConnecting();
 
 						canDataSender = new CanDataSender( SoundManagementActivity.this,
 							gatheringTableString,
