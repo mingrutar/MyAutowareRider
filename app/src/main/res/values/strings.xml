@@ -2,5 +2,6 @@
 <resources>
 
     <string name="app_name">MingAutowareRider</string>
+    <string name="app_label">Ming Autoware</string>
 
 </resources>

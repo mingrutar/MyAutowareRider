@@ -30,24 +30,6 @@
 
 package com.ghostagent;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
-
-import com.design.DrawCenterView;
-import com.design.DrawLeftView;
-import com.design.DrawRightView;
-import com.ghostagent.R;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -71,479 +53,40 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.View.OnClickListener;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.client.CanDataGather;
+import com.client.CanDataSender;
+import com.client.CommandClient;
+import com.client.InformationClient;
+import com.design.DrawCenterView;
+import com.design.DrawLeftView;
+import com.design.DrawRightView;
+import com.ui.ApplicationButton;
+import com.ui.DriveButton;
+import com.ui.GearButton;
+import com.ui.S1Button;
+import com.ui.S2Button;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.StringTokenizer;
+
 public class SoundManagementActivity extends Activity implements OnClickListener {
-	abstract class RadioButton {
-		static final int INVALID = -1;
-
-		private int mode = INVALID;
-
-		int getMode() {
-			return mode;
-		}
-
-		void updateMode(int mode) {
-			if (mode == this.mode)
-				mode = INVALID;
-			this.mode = mode;
-
-			refresh();
-		}
-
-		abstract void refresh();
-	}
-
-	class GearButton extends RadioButton {
-		static final int DRIVE = 1;
-		static final int REVERSE = 2;
-		static final int BRAKE = 3;
-		static final int NEUTRAL = 4;
-
-		ImageButton drive;
-		ImageButton reverse;
-		ImageButton brake;
-		ImageButton neutral;
-
-		GearButton(OnClickListener listener) {
-			drive = (ImageButton)findViewById(R.id.p3);
-			drive.setOnClickListener(listener);
-			reverse = (ImageButton)findViewById(R.id.p4);
-			reverse.setOnClickListener(listener);
-			brake = (ImageButton)findViewById(R.id.p1);
-			brake.setOnClickListener(listener);
-			neutral = (ImageButton)findViewById(R.id.p2);
-			neutral.setOnClickListener(listener);
-
-			refresh();
-		}
-
-		@Override
-		void refresh() {
-			drive.setImageResource(R.drawable.gear_d);
-			reverse.setImageResource(R.drawable.gear_r);
-			brake.setImageResource(R.drawable.gear_b);
-			neutral.setImageResource(R.drawable.gear_n);
-
-			switch (getMode()) {
-			case DRIVE:
-				drive.setImageResource(R.drawable.pressed_gear_d);
-				break;
-			case REVERSE:
-				reverse.setImageResource(R.drawable.pressed_gear_r);
-				break;
-			case BRAKE:
-				brake.setImageResource(R.drawable.pressed_gear_b);
-				break;
-			case NEUTRAL:
-				neutral.setImageResource(R.drawable.pressed_gear_n);
-				break;
-			}
-		}
-	}
-
-	class DriveButton extends RadioButton {
-		static final int AUTO = 1;
-		static final int NORMAL = 0;
-		static final int PURSUIT = 2;
-
-		ImageButton auto;
-		ImageButton normal;
-		ImageButton pursuit;
-
-		DriveButton(OnClickListener listener) {
-			auto = (ImageButton)findViewById(R.id.autoCruise);
-			auto.setOnClickListener(listener);
-			normal = (ImageButton)findViewById(R.id.normalCruise);
-			normal.setOnClickListener(listener);
-			pursuit = (ImageButton)findViewById(R.id.pursuit);
-			pursuit.setOnClickListener(listener);
-
-			refresh();
-		}
-
-		@Override
-		void refresh() {
-			auto.setImageResource(R.drawable.autocruise);
-			normal.setImageResource(R.drawable.normalcruise);
-			pursuit.setImageResource(R.drawable.pursuit);
-
-			switch (getMode()) {
-			case AUTO:
-				auto.setImageResource(R.drawable.pressed_autocruise);
-				break;
-			case NORMAL:
-				normal.setImageResource(R.drawable.pressed_normalcruise);
-				break;
-			case PURSUIT:
-				pursuit.setImageResource(R.drawable.pressed_pursuit);
-				break;
-			}
-		}
-	}
-
-	class ApplicationButton extends RadioButton {
-		static final int NAVIGATION = 1;
-		static final int MAP = 2;
-
-		ImageButton navigation;
-		ImageButton map;
-
-		ApplicationButton(OnClickListener listener) {
-			navigation = (ImageButton)findViewById(R.id.air);
-			navigation.setOnClickListener(listener);
-			map = (ImageButton)findViewById(R.id.oil);
-			map.setOnClickListener(listener);
-
-			refresh();
-		}
-
-		@Override
-		void refresh() {
-			navigation.setImageResource(R.drawable.app_navi);
-			map.setImageResource(R.drawable.app_map);
-
-			switch (getMode()) {
-			case NAVIGATION:
-				navigation.setImageResource(R.drawable.pressed_app_navi);
-				break;
-			case MAP:
-				map.setImageResource(R.drawable.pressed_app_map);
-				break;
-			}
-		}
-	}
-
-	class S1Button extends RadioButton {
-		static final int NG = 1;
-		static final int OK = 2;
-
-		ImageButton s1;
-
-		S1Button(OnClickListener listener) {
-			s1 = (ImageButton)findViewById(R.id.s1);
-			s1.setOnClickListener(listener);
-
-			refresh();
-		}
-
-		@Override
-		void refresh() {
-			s1.setImageResource(R.drawable.app_s1);
-
-			switch (getMode()) {
-			case NG:
-				s1.setImageResource(R.drawable.pressed_app_s1_ng);
-				break;
-			case OK:
-				s1.setImageResource(R.drawable.pressed_app_s1_ok);
-				break;
-			}
-		}
-	}
-
-	class S2Button extends RadioButton {
-		static final int NG = 1;
-		static final int OK = 2;
-
-		ImageButton s2;
-
-		S2Button(OnClickListener listener) {
-			s2 = (ImageButton)findViewById(R.id.s2);
-			s2.setOnClickListener(listener);
-
-			refresh();
-		}
-
-		@Override
-		void refresh() {
-			s2.setImageResource(R.drawable.app_s2);
-
-			switch (getMode()) {
-			case NG:
-				s2.setImageResource(R.drawable.pressed_app_s2_ng);
-				break;
-			case OK:
-				s2.setImageResource(R.drawable.pressed_app_s2_ok);
-				break;
-			}
-		}
-	}
-
-	abstract class Client {
-		private static final int TIMEOUT = 5;
-
-		private int sockfd = -1;
-
-		boolean isClosed() {
-			if (sockfd < 0)
-				return true;
-			else
-				return false;
-		}
-
-		synchronized boolean connect(String address, int port) {
-			sockfd = SoundManagementNative.socket();
-			if (sockfd < 0)
-				return false;
-
-			if (SoundManagementNative.connect(sockfd, TIMEOUT, address, port) < 0) {
-				close();
-				return false;
-			}
-
-			return true;
-		}
-
-		synchronized void close() {
-			SoundManagementNative.close(sockfd);
-			sockfd = -1;
-		}
-
-		void sendInt(int arg0) {
-			SoundManagementNative.sendInt(sockfd, TIMEOUT, arg0);
-		}
-
-		void sendIntTuple(int arg0, int arg1) {
-			SoundManagementNative.sendIntTuple(sockfd, TIMEOUT, arg0, arg1);
-		}
-
-		void sendDoubleArray(double arg0[]) {
-			SoundManagementNative.sendDoubleArray(sockfd, TIMEOUT, arg0);
-		}
-
-		int recvInt() {
-			return SoundManagementNative.recvInt(sockfd, TIMEOUT);
-		}
-
-		int recvNDT() {
-			return SoundManagementNative.recvNDT(sockfd, TIMEOUT);
-		}
-	}
-
-	class CommandClient extends Client {
-		static final int EXIT = 0;
-		static final int GEAR = 1;
-		static final int MODE = 2;
-		static final int ROUTE = 3;
-		static final int S1 = 4;
-		static final int S2 = 5;
-		static final int POSE = 6;
-
-		static final int EXIT_DESTROY_ACTIVITY = 0;
-		static final int EXIT_UPDATE_CONFIGURATION = 1;
-		static final int EXIT_EXCEED_ERROR_LIMIT = -1;
-		static final int EXIT_RECEIVE_BROKEN_PACKET = -2;
-
-		synchronized int send(int type, int command) {
-			if (isClosed())
-				return -1;
-
-			sendIntTuple(type, command);
-
-			return recvInt();
-		}
-
-		synchronized int sendRoute(double[] latlong) {
-			if (isClosed())
-				return -1;
-
-			sendIntTuple(ROUTE, latlong.length * (Double.SIZE / 8));
-
-			sendDoubleArray(latlong);
-
-			return recvInt();
-		}
-
-		synchronized int sendPose(double[] pose) {
-			if (isClosed())
-				return -1;
-
-			sendIntTuple(POSE, pose.length * (Double.SIZE / 8));
-
-			sendDoubleArray(pose);
-
-			return recvInt();
-		}
-	}
-
-	class InformationClient extends Client {
-		static final int BEACON = 0;
-		static final int ERROR = 1;
-		static final int CAN = 2;
-		static final int MODE = 3;
-		static final int NDT = 4;
-		static final int LF = 5;
-
-		static final int MISS_BEACON_LIMIT = 10;
-
-		static final int CAN_SHIFT_BRAKE = 0x00;
-		static final int CAN_SHIFT_DRIVE = 0x10;
-		static final int CAN_SHIFT_NEUTRAL = 0x20;
-		static final int CAN_SHIFT_REVERSE = 0x40;
-
-		synchronized int[] recv(int response) {
-			int[] data = new int[2];
-
-			if (isClosed()) {
-				data[0] = -1;
-				data[1] = -1;
-				return data;
-			}
-
-			data[0] = recvInt();
-			if (data[0] < 0) {
-				data[1] = -1;
-				return data;
-			}
-
-			if (data[0] == NDT)
-				data[1] = recvNDT();
-			else
-				data[1] = recvInt();
-			if (data[1] < 0)
-				return data;
-
-			sendInt(response);
-
-			return data;
-		}
-	}
-
-	class CanDataSender {
-		private boolean isRunning = false;
-
-		private String table;
-		private String terminal;
-		private String str;
-		private String sp;
-		private String sh;
-		private String su;
-		private String spss;
-		private String lp;
-		private String fh;
-		private String fp;
-		private Intent intent;
-
-		CanDataSender(String table, String terminal, String str, String sp, String sh,
-			      String su, String spss, String lp, String fh, String fp) {
-			this.table = table;
-			this.terminal = terminal;
-			this.str = str;
-			this.sp = sp;
-			this.sh = sh;
-			this.su = su;
-			this.spss = spss;
-			this.lp = lp;
-			this.fh = fh;
-			this.fp = fp;
-
-			intent = new Intent(Intent.ACTION_MAIN);
-			intent.setClassName("com.example.candatasender",
-					    "com.example.candatasender.service.CanDataAutoSend");
-		}
-
-		boolean isRunning() {
-			return isRunning;
-		}
-
-		void start() {
-			intent.putExtra("table", table);
-			intent.putExtra("terminal", terminal);
-			intent.putExtra("pfd", true);
-			intent.putExtra("str", str);
-			intent.putExtra("sp", sp);
-			intent.putExtra("sh", sh);
-			intent.putExtra("su", su);
-			intent.putExtra("spss", spss);
-			intent.putExtra("lp", lp);
-			intent.putExtra("fh", fh);
-			intent.putExtra("fp", fp);
-
-			startService(intent);
-			isRunning = true;
-		}
-
-		void stop() {
-			isRunning = false;
-			stopService(intent);
-		}
-
-		String getTable() {
-			return table;
-		}
-
-		String getTerminal() {
-			return terminal;
-		}
-
-		String getStr() {
-			return str;
-		}
-
-		String getSp() {
-			return sp;
-		}
-
-		String getSh() {
-			return sh;
-		}
-
-		String getSu() {
-			return su;
-		}
-
-		String getSpss() {
-			return spss;
-		}
-
-		String getLp() {
-			return lp;
-		}
-
-		String getFh() {
-			return fh;
-		}
-
-		String getFp() {
-			return fp;
-		}
-	}
-
-	class CanDataGather {
-		static final int CAN_GATHER = 0;
-		static final int CAR_LINK_BLUETOOTH = 1;
-		static final int CAR_LINK_USB = 2;
-
-		private Intent intent;
-
-		CanDataGather(int type) {
-			intent = new Intent(Intent.ACTION_MAIN);
-			switch (type) {
-			case CAN_GATHER:
-				intent.setClassName("com.ecsgr.android.cangather",
-						    "com.ecsgr.android.cangather.MainActivity");
-				break;
-			case CAR_LINK_BLUETOOTH:
-				intent.setClassName("com.metaprotocol.android.carlinkcan232",
-						    "com.metaprotocol.android.carlinkcan232.CarLinkMainActivity");
-				break;
-			case CAR_LINK_USB:
-				intent.setClassName("com.metaprotocol.android.carlinkcanusbaccessory",
-						    "com.metaprotocol.android.carlinkcanusbaccessory.CarLinkMainActivity");
-				break;
-			}
-		}
-
-		void start() {
-			startActivity(intent);
-		}
-	}
+	static final String AUTOWAREHOST = "192.168.0.195";
 
 	GearButton gearButton;
 	DriveButton driveButton;
@@ -703,10 +246,11 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		informationClient = new InformationClient();
 
 		// default settings
-		address = "";
+//		address = "";
+		address = AUTOWAREHOST ;
 		commandPort = 5666;
 		informationPort = 5777;
-		canDataSender = new CanDataSender(
+		canDataSender = new CanDataSender( SoundManagementActivity.this,
 			"",
 			getMacAddress(),
 			"AutowareRider",
@@ -755,7 +299,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				if (validatePortNumber(settings[5]) &&
 				    validatePortNumber(settings[7]) &&
 				    validatePortNumber(settings[9])) {
-					canDataSender = new CanDataSender(
+					canDataSender = new CanDataSender(SoundManagementActivity.this,
 						settings[3],
 						getMacAddress(),
 						"AutowareRider",
@@ -978,7 +522,8 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				portEdit.setText(String.valueOf(canDataSender.getFp()));
 			}
 
-			builder.setTitle("設定");
+//			builder.setTitle("設定");
+			builder.setTitle("Setting");
 			builder.setView(view);
 			builder.setPositiveButton(
 				"OK",
@@ -1073,7 +618,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 						} else
 							stopServerConnecting();
 
-						canDataSender = new CanDataSender(
+						canDataSender = new CanDataSender( SoundManagementActivity.this,
 							gatheringTableString,
 							getMacAddress(),
 							"AutowareRider",
@@ -1087,7 +632,8 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					}
 				});
 			builder.setNegativeButton(
-				"キャンセル",
+				"Configuration",
+//					"キャンセル",
 				new DialogInterface.OnClickListener () {
 					public void onClick(DialogInterface dialog, int which) {
 					}
@@ -1100,10 +646,12 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				R.layout.data_gathering,
 				(ViewGroup)findViewById(R.id.dataGatheringLayout));
 
-			builder.setTitle("データ収集");
+			builder.setTitle("Gethering");
+//			builder.setTitle("データ収集");
 			builder.setView(view);
 			builder.setNegativeButton(
-				"キャンセル",
+					"Configuration",
+//				"キャンセル",
 				new DialogInterface.OnClickListener () {
 					public void onClick(DialogInterface dialog, int which) {
 					}
@@ -1347,21 +895,21 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 	public void startCanGather(View v) {
 		canDataSender.start();
 
-		CanDataGather gather = new CanDataGather(CanDataGather.CAN_GATHER);
+		CanDataGather gather = new CanDataGather(SoundManagementActivity.this, CanDataGather.CAN_GATHER);
 		gather.start();
 	}
 
 	public void startCarLinkBluetooth(View v) {
 		canDataSender.start();
 
-		CanDataGather gather = new CanDataGather(CanDataGather.CAR_LINK_BLUETOOTH);
+		CanDataGather gather = new CanDataGather(SoundManagementActivity.this, CanDataGather.CAR_LINK_BLUETOOTH);
 		gather.start();
 	}
 
 	public void startCarLinkUSB(View v) {
 		canDataSender.start();
 
-		CanDataGather gather = new CanDataGather(CanDataGather.CAR_LINK_USB);
+		CanDataGather gather = new CanDataGather(SoundManagementActivity.this, CanDataGather.CAR_LINK_USB);
 		gather.start();
 	}
 
@@ -1405,6 +953,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 
 	@Override
 	public void onRestart() {
+		super.onRestart();
 		if (applicationButton.getMode() == ApplicationButton.NAVIGATION) {
 			applicationButton.updateMode(ApplicationButton.NAVIGATION);
 			File file = new File(
@@ -1461,6 +1010,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		} else if (v == driveButton.normal) {
 			data = commandClient.send(CommandClient.MODE, DriveButton.NORMAL);
 		} else if (v == driveButton.pursuit) {
+			Toast.makeText(this, "Pursuit not supported yet", Toast.LENGTH_LONG).show();
 			finish();
 			data = 0;
 		} else if (v == applicationButton.navigation) {
