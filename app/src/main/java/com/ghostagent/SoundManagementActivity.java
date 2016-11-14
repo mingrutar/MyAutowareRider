@@ -212,7 +212,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				if (!startServerConnecting())
 					stopServerConnecting();
 			}
-		});
+		}).start();
 	}
 	void sendExitCommand() {
 		new Thread(new Runnable() {
@@ -220,7 +220,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 			public void run() {
 				sendExitCommand();
 			}
-		});
+		}).start();
 	}
 	private void stopServerConnecting() {
 		drawLeftView.setColor(COLOR_DARK_RED);
@@ -959,7 +959,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 					stopServerConnecting();
 				}
 			}
-		}) ;
+		}).start(); ;
 	}
 
 	@Override
@@ -1010,7 +1010,7 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 				if (data < 0)
 					stopServerConnecting();
 			}
-		});
+		}).start();
 		return 0;
 	}
 	@Override
