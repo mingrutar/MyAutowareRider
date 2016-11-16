@@ -22,4 +22,4 @@ This is the way how run it, since it did not work, some steps may need change, p
 
 Screenshots
 
-[!main] ()
+![main](https://github.com/mingrutar/MyAutowareRider/blob/master/screenshots/MyAutowareRider.png?raw=true)
