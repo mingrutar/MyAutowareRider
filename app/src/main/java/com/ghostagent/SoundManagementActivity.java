@@ -86,7 +86,9 @@ import java.util.Random;
 import java.util.StringTokenizer;
 
 public class SoundManagementActivity extends Activity implements OnClickListener {
-	static final String AUTOWAREHOST = "192.168.0.195";
+	static final String LOG_TAG = SoundManagementActivity.class.getSimpleName();
+
+	static final String AUTOWAREHOST = "192.168.0.197";
 
 	GearButton gearButton;
 	DriveButton driveButton;
@@ -194,13 +196,17 @@ public class SoundManagementActivity extends Activity implements OnClickListener
 		drawRightView.setColor(COLOR_RED);
 		drawCenterView.setColor(COLOR_RED);
 		if (commandClient.send(CommandClient.GEAR, gearButton.getMode()) < 0)
-			return false;
+			Log.v(LOG_TAG, "send(CommandClient.GEAR, invalid failed");
+//			return false;
 		if (commandClient.send(CommandClient.MODE, driveButton.getMode()) < 0)
-			return false;
+			Log.v(LOG_TAG, "send(CommandClient.MODE, invalid failed");
+//			return false;
 		if (commandClient.send(CommandClient.S1, s1Button.getMode()) < 0)
-			return false;
+			Log.v(LOG_TAG, "send(CommandClient.S1, invalid failed");
+//			return false;
 		if (commandClient.send(CommandClient.S2, s2Button.getMode()) < 0)
-			return false;
+			Log.v(LOG_TAG, "send(CommandClient.S2, invalid failed");
+//			return false;
 		return true;
 	}
 	void initiateConnections(final String address, final int commandPort, final int informationPort) {

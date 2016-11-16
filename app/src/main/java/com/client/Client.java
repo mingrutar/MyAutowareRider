@@ -23,33 +23,23 @@ public abstract class Client {
         return (mSocket == null) || ((mSocket!=null) && mSocket.isClosed());
     }
     public void connect(final String address, final int port) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    mSocket = new Socket(address, port);
-                    mSocket.setSoTimeout(TIMEOUT);
-                    Log.v(LOG_TAG, "++++ connected to "+address+":"+port);
-                } catch (IOException ex) {
-                    Log.e(LOG_TAG, "connect to "+address+":"+port+" caught exception:"+ex);
-                }
-            }
-        });
+        try {
+            mSocket = new Socket(address, port);
+            mSocket.setSoTimeout(TIMEOUT);
+            Log.v(LOG_TAG, "++++ connected to "+address+":"+port);
+        } catch (IOException ex) {
+            Log.e(LOG_TAG, "connect to "+address+":"+port+" caught exception:"+ex);
+        }
     }
 
     public synchronized void close() {
         if (mSocket != null ) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        mSocket.close();
-                        mSocket = null;
-                    } catch (IOException ex) {
-                        Log.e(LOG_TAG, "close caught exception:" + ex);
-                    }
-                }
-            });
+            try {
+                mSocket.close();
+                mSocket = null;
+            } catch (IOException ex) {
+                Log.e(LOG_TAG, "close caught exception:" + ex);
+            }
         }
     }
 
